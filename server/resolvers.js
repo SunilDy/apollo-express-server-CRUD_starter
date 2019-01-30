@@ -3,7 +3,6 @@ const User = require('../Models/User');
 
 // PUBSUB Consts
 const NEW_USER = "NEW_USER";
-const USER_DELETED = "USER_DELETED";
 const USER_UPDATED = "USER_UPDATED";
 
 const resolvers = {
@@ -29,40 +28,29 @@ const resolvers = {
                 newUser: user
             });
             return user.save();
+           
         },
-        deleteUser: (_, { name, password }, {pubsub}) => {
-            User.findOneAndRemove({name, password}, (err, user) => {
+        updateUser: (_, args, {res}) => {
+            return User.findByIdAndUpdate({_id:args.id}, args, {new: true}, (err, _) => {
                 if(err) {
-                    return err;
+                    return res.status(500).send(err)
                 }
-                else {
-                    pubsub.publish(USER_DELETED, {
-                        userDeleted: user
-                    });
-                    return user;
-                }
-            });
-        },
-        updateUser: (_, {name, password, updateName}) => {
-            User.findOneAndUpdate({name, password}, {$set: {name: updateName}}, (err, user) => {
-                if(err) {
-                    return err;
-                } else {
-                    pubsub.publish(USER_UPDATED, {
-                        userUpdated: user
-                    })
-                    return user;
-                }
-                
+                pubsub.publish(USER_UPDATED, {
+                    userUpdated: args.name
+                })
+                return
             })
+        },
+        addUserDetails: async (_, {name, password, nickname}) => {
+            return await User.findOneAndUpdate({name, password}, {$set: {userDetails: {nickname}}}, {new: true} );
+        },
+        addJoke: async (_, {name, password, joke}) => {
+            return await User.findOneAndUpdate({name, password}, {$set: {userDetails: {joke}}});
         }
     },
     Subscription: {
         newUser: {
             subscribe: () => pubsub.asyncIterator([NEW_USER])
-        },
-        userDeleted: {
-            subscribe: () => pubsub.asyncIterator([USER_DELETED])
         },
         userUpdated: {
             subscribe: () => pubsub.asyncIterator([USER_UPDATED])

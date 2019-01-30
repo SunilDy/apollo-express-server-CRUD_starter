@@ -1,13 +1,12 @@
 const { ApolloServer } = require("apollo-server-express");
 const express = require("express");
 const mongoose = require("mongoose");
-const http = require('http')
-
+const http = require('http');
 
 // Imports
 const {typeDefs, resolvers} = require('./server/exports');
 const {username,pass} = require('./keys');
-const { pubsub } = require('./server/resolvers')
+const { pubsub } = require('./server/resolvers');
 
 const main = async () => {
     const app = express();
