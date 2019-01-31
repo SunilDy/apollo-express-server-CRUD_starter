@@ -30,16 +30,30 @@ const resolvers = {
             return user.save();
            
         },
+        // updateUser: (_, args, {res}) => {
+        //     return User.findByIdAndUpdate({_id:args.id}, args, {new: true}, (err, _) => {
+        //         if(err) {
+        //             return res.status(500).send(err)
+        //         }
+        //         pubsub.publish(USER_UPDATED, {
+        //             userUpdated: args.name
+        //         })
+        //         return
+        //     })
+        // },
         updateUser: (_, args, {res}) => {
-            return User.findByIdAndUpdate({_id:args.id}, args, {new: true}, (err, _) => {
-                if(err) {
-                    return res.status(500).send(err)
-                }
-                pubsub.publish(USER_UPDATED, {
-                    userUpdated: args.name
-                })
-                return
-            })
+            return User.findByIdAndUpdate({_id:args.id},
+                args,
+                {new: true, runValidators: true})
+                    .then(doc => {
+                        pubsub.publish(USER_UPDATED, {
+                            userUpdated: args.name
+                        })
+                        return doc
+                    })
+                    .catch(err => {
+                        return res.status(500).send(err)
+                    })
         },
         addUserDetails: async (_, {name, password, nickname}) => {
             return await User.findOneAndUpdate({name, password}, {$set: {userDetails: {nickname}}}, {new: true} );
